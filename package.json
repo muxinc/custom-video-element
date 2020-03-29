@@ -1,0 +1,30 @@
+{
+  "name": "custom-video-element",
+  "version": "0.0.1",
+  "description": "Extendable native video element",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "./dist/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && rollup --config",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "custom",
+    "element",
+    "video",
+    "web",
+    "component"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "rollup-plugin-babel-minify": "^10.0.0",
+    "rollup": "^2.2.0"
+  },
+  "author": "@muxinc",
+  "license": "MIT"
+}
