@@ -26,11 +26,15 @@ template.innerHTML = `
   }
 
   video {
+    position: absolute;
+
     /* Fill the continer */
     width: 100%;
     height: 100%;
   }
 </style>
+
+<video crossorigin></video>
 `;
 
 class CustomVideoElement extends HTMLElement {
@@ -40,7 +44,7 @@ class CustomVideoElement extends HTMLElement {
     var shadow = this.attachShadow({ mode: 'open' });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
-    const nativeEl = (this.nativeEl = document.createElement('video'));
+    const nativeEl = this.nativeEl = this.shadowRoot.querySelector('video');
 
     // Initialize all the attribute properties
     Array.prototype.forEach.call(this.attributes, attrNode => {
@@ -135,6 +139,32 @@ class CustomVideoElement extends HTMLElement {
         }
       }
     }
+  }
+
+  connectedCallback() {
+    this.querySelectorAll(':scope > track').forEach((track)=>{
+      this.nativeEl.appendChild(track.cloneNode());
+    });
+
+    // Watch for child adds/removes and update the native element if necessary
+    const mutationCallback = (mutationsList, observer) => {
+      for (let mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+
+          // Child being removed
+          mutation.removedNodes.forEach(node => {
+            this.nativeEl.removeChild(this.nativeEl.querySelector(`track[src="${node.src}"]`));
+          });
+
+          mutation.addedNodes.forEach(node => {
+            this.nativeEl.appendChild(node.cloneNode());
+          });
+        }
+      }
+    };
+
+    const observer = new MutationObserver(mutationCallback);
+    observer.observe(this, { childList: true, subtree: true });
   }
 }
 
