@@ -61,6 +61,30 @@ class CustomVideoElement extends HTMLElement {
     }
 
     this.shadowRoot.appendChild(nativeEl);
+
+    this.querySelectorAll(':scope > track').forEach((track)=>{
+      this.nativeEl.appendChild(track.cloneNode());
+    });
+
+    // Watch for child adds/removes and update the native element if necessary
+    const mutationCallback = (mutationsList, observer) => {
+      for (let mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+
+          // Child being removed
+          mutation.removedNodes.forEach(node => {
+            this.nativeEl.removeChild(this.nativeEl.querySelector(`track[src="${node.src}"]`));
+          });
+
+          mutation.addedNodes.forEach(node => {
+            this.nativeEl.appendChild(node.cloneNode());
+          });
+        }
+      }
+    };
+
+    const observer = new MutationObserver(mutationCallback);
+    observer.observe(this, { childList: true, subtree: true });
   }
 
   // observedAttributes is required to trigger attributeChangedCallback
@@ -142,29 +166,7 @@ class CustomVideoElement extends HTMLElement {
   }
 
   connectedCallback() {
-    this.querySelectorAll(':scope > track').forEach((track)=>{
-      this.nativeEl.appendChild(track.cloneNode());
-    });
 
-    // Watch for child adds/removes and update the native element if necessary
-    const mutationCallback = (mutationsList, observer) => {
-      for (let mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-
-          // Child being removed
-          mutation.removedNodes.forEach(node => {
-            this.nativeEl.removeChild(this.nativeEl.querySelector(`track[src="${node.src}"]`));
-          });
-
-          mutation.addedNodes.forEach(node => {
-            this.nativeEl.appendChild(node.cloneNode());
-          });
-        }
-      }
-    };
-
-    const observer = new MutationObserver(mutationCallback);
-    observer.observe(this, { childList: true, subtree: true });
   }
 }
 
