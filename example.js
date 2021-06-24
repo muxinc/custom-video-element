@@ -4,10 +4,6 @@ class MyCustomVideoElement extends CustomVideoElement {
   constructor() {
     super();
   }
-
-  connectedCallback() {
-
-  }
 }
 
 if (!window.customElements.get('my-custom-video')) {

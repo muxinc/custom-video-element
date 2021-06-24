@@ -9,7 +9,13 @@
     <my-custom-video
       src="http://stream.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/high.mp4"
       controls
-    ></my-custom-video>
+    >
+      <track label="thumbnails" id="customTrack" default kind="metadata" src="https://image.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/storyboard.vtt"></track>
+    </my-custom-video>
+
+    <script>
+      const mcv = document.querySelector('my-custom-video');
+    </script>
 
   </body>
 </html>
