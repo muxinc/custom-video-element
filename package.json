@@ -9,8 +9,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "esbuild index.js --bundle --outdir=dist --servedir=.",
+    "build": "rm -rf dist && esbuild index.js --bundle --minify --outdir=dist"
   },
   "keywords": [
     "custom",
@@ -20,12 +21,8 @@
     "component"
   ],
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
-    "np": "^7.5.0",
-    "rollup": "^2.2.0",
-    "rollup-plugin-babel-minify": "^10.0.0",
-    "rollup-plugin-terser": "^5.3.0"
+    "esbuild": "^0.14.41",
+    "np": "^7.5.0"
   },
   "author": "@muxinc",
   "license": "MIT"
