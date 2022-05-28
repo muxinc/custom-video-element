@@ -224,9 +224,9 @@ function arrayFindAnyCase(arr, word) {
   return found;
 }
 
-if (!window.customElements.get('custom-video')) {
-  window.customElements.define('custom-video', CustomVideoElement);
-  window.CustomVideoElement = CustomVideoElement;
+if (!globalThis.customElements.get('custom-video')) {
+  globalThis.customElements.define('custom-video', CustomVideoElement);
+  globalThis.CustomVideoElement = CustomVideoElement;
 }
 
 export default CustomVideoElement;
