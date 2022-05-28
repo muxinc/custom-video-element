@@ -5,6 +5,38 @@
  * extended today across browsers.
  */
 
+// The onevent like props are weirdly set on the HTMLElement prototype with other
+// generic events making it impossible to pick these specific to HTMLMediaElement.
+export const VideoEvents = [
+  'abort',
+  'canplay',
+  'canplaythrough',
+  'durationchange',
+  'emptied',
+  'encrypted',
+  'ended',
+  'error',
+  'loadeddata',
+  'loadedmetadata',
+  'loadstart',
+  'pause',
+  'play',
+  'playing',
+  'progress',
+  'ratechange',
+  'seeked',
+  'seeking',
+  'stalled',
+  'suspend',
+  'timeupdate',
+  'volumechange',
+  'waiting',
+  'waitingforkey',
+  'resize',
+  'enterpictureinpicture',
+  'leavepictureinpicture',
+];
+
 const template = document.createElement('template');
 // Could you get styles to apply by passing a global button from global to shadow?
 
@@ -56,6 +88,14 @@ class CustomVideoElement extends HTMLElement {
     if (nativeEl.defaultMuted) {
       nativeEl.muted = true;
     }
+
+    // The video events are dispatched on the CustomVideoElement instance.
+    // This makes it possible to add event listeners before the element is upgraded.
+    VideoEvents.forEach((type) => {
+      nativeEl.addEventListener(type, (evt) => {
+        this.dispatchEvent(new CustomEvent(evt.type, { detail: evt.detail }));
+      });
+    });
 
     // Gets the first slot element in the shadow dom.
     const slotEl = this.shadowRoot.querySelector('slot');
@@ -158,8 +198,6 @@ class CustomVideoElement extends HTMLElement {
 // Skipping HTMLElement because of things like "attachShadow"
 // causing issues. Most of those props still need to apply to
 // the custom element.
-// But includign EventTarget props because most events emit from
-// the native element.
 let nativeElProps = [];
 
 // Can't check typeof directly on element prototypes without
@@ -187,10 +225,6 @@ for (
     }
   });
 }
-
-// For the video element we also want to pass through all event listeners
-// because all the important events happen there.
-nativeElProps = nativeElProps.concat(Object.keys(EventTarget.prototype));
 
 // Passthrough native el functions from the custom el to the native el
 nativeElProps.forEach(prop => {
