@@ -52,8 +52,6 @@ class CustomVideoElement extends HTMLElement {
       nativeEl.muted = true;
     }
 
-    this.shadowRoot.appendChild(nativeEl);
-
     const slotEl = this.shadowRoot.querySelector('slot');
     slotEl.addEventListener('slotchange', () => {
       slotEl.assignedElements().forEach((el) => {
