@@ -11,26 +11,17 @@ const template = document.createElement('template');
 template.innerHTML = `
 <style>
   :host {
-    /* Supposed to reset styles. Need to understand the specific effects more */
-    all: initial;
-
-    /* display:inline (like the native el) makes it so you can't fill
-      the container with the native el */
     display: inline-block;
-    box-sizing: border-box;
-    position: relative;
-
-    /* Same default widths as the native el */
-    width: 300px;
-    height: 150px;
+    line-height: 0;
+    width: auto;
+    height: auto;
   }
 
   video {
-    position: absolute;
-
-    /* Fill the continer */
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    min-width: 100%;
+    min-height: 100%;
   }
 </style>
 
@@ -41,7 +32,7 @@ class CustomVideoElement extends HTMLElement {
   constructor() {
     super();
 
-    var shadow = this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     const nativeEl = this.nativeEl = this.shadowRoot.querySelector('video');
