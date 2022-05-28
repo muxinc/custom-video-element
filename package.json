@@ -4,6 +4,7 @@
   "description": "Extendable native video element",
   "type": "module",
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "./dist/*",
     "README.md"
