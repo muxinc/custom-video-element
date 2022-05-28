@@ -24,9 +24,8 @@ template.innerHTML = `
     min-height: 100%;
   }
 </style>
-
-<video crossorigin></video>
 <slot></slot>
+<slot name="media"><video part="video" crossorigin></video></slot>
 `;
 
 class CustomVideoElement extends HTMLElement {
@@ -36,7 +35,9 @@ class CustomVideoElement extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
-    const nativeEl = this.nativeEl = this.shadowRoot.querySelector('video');
+    const mediaSlot = this.shadowRoot.querySelector('[name=media]');
+    const nativeEl = mediaSlot.assignedElements({ flatten: true })[0];
+    this.nativeEl = nativeEl;
 
     // Initialize all the attribute properties
     Array.prototype.forEach.call(this.attributes, attrNode => {
@@ -52,6 +53,7 @@ class CustomVideoElement extends HTMLElement {
       nativeEl.muted = true;
     }
 
+    // Gets the first slot element in the shadow dom.
     const slotEl = this.shadowRoot.querySelector('slot');
     slotEl.addEventListener('slotchange', () => {
       slotEl.assignedElements().forEach((el) => {
