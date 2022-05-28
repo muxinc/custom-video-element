@@ -16,6 +16,12 @@
 
     <script>
       const mcv = document.querySelector('my-custom-video');
+      mcv.addEventListener('click', function(event) {
+        console.log(event.type, 'paused', mcv.paused);
+      });
+      mcv.addEventListener('play', function(event) {
+        console.log(event.type, 'paused', mcv.paused);
+      });
     </script>
 
   </body>
