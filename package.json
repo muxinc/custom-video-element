@@ -12,7 +12,7 @@
   "scripts": {
     "test": "web-test-runner test.js --node-resolve",
     "dev": "esbuild index.js --bundle --outdir=dist --servedir=.",
-    "build": "rm -rf dist && esbuild index.js --bundle --minify --outdir=dist"
+    "build": "rm -rf dist && esbuild index.js --target=es2019 --bundle --minify --outdir=dist"
   },
   "keywords": [
     "custom",

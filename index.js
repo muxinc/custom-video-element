@@ -49,7 +49,7 @@ template.innerHTML = `
     height: auto;
   }
 
-  video {
+  ::slotted(video), video {
     max-width: 100%;
     max-height: 100%;
     min-width: 100%;
@@ -65,11 +65,23 @@ class CustomVideoElement extends HTMLElement {
     super();
 
     this.attachShadow({ mode: 'open' });
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.shadowRoot.append(template.content.cloneNode(true));
 
     const mediaSlot = this.shadowRoot.querySelector('[name=media]');
-    const nativeEl = mediaSlot.assignedElements({ flatten: true })[0];
-    this.nativeEl = nativeEl;
+    this.#initNativeEl(mediaSlot);
+    mediaSlot.addEventListener('slotchange', () => this.#initNativeEl(mediaSlot));
+
+    // Gets the first slot element in the shadow dom.
+    const slotEl = this.shadowRoot.querySelector('slot');
+    slotEl.addEventListener('slotchange', () => {
+      slotEl.assignedElements().forEach((el) => {
+        this.nativeEl.append(el);
+      });
+    });
+  }
+
+  #initNativeEl(mediaSlot) {
+    this.nativeEl = mediaSlot.assignedElements({ flatten: true })[0];
 
     // Initialize all the attribute properties
     // This is required before attributeChangedCallback is called after construction
@@ -77,7 +89,7 @@ class CustomVideoElement extends HTMLElement {
     // Don't call attributeChangedCallback directly here because the extending class
     // could have overridden attributeChangedCallback leading to unexpected results.
     Array.prototype.forEach.call(this.attributes, attrNode => {
-      this.forwardAttribute(attrNode.name, null, attrNode.value);
+      this.#forwardAttribute(attrNode.name, null, attrNode.value);
     });
 
     // Neither Chrome or Firefox support setting the muted attribute
@@ -85,23 +97,15 @@ class CustomVideoElement extends HTMLElement {
     // One way to get around this would be to build the native tag as a string.
     // But just fixing it manually for now.
     // Apparently this may also be an issue with <input checked> for buttons
-    if (nativeEl.defaultMuted) {
-      nativeEl.muted = true;
+    if (this.nativeEl.defaultMuted) {
+      this.nativeEl.muted = true;
     }
 
     // The video events are dispatched on the CustomVideoElement instance.
     // This makes it possible to add event listeners before the element is upgraded.
     VideoEvents.forEach((type) => {
-      nativeEl.addEventListener(type, (evt) => {
+      this.nativeEl.addEventListener(type, (evt) => {
         this.dispatchEvent(new CustomEvent(evt.type, { detail: evt.detail }));
-      });
-    });
-
-    // Gets the first slot element in the shadow dom.
-    const slotEl = this.shadowRoot.querySelector('slot');
-    slotEl.addEventListener('slotchange', () => {
-      slotEl.assignedElements().forEach((el) => {
-        nativeEl.appendChild(el);
       });
     });
   }
@@ -141,12 +145,12 @@ class CustomVideoElement extends HTMLElement {
   }
 
   attributeChangedCallback(attrName, oldValue, newValue) {
-    this.forwardAttribute(attrName, oldValue, newValue);
+    this.#forwardAttribute(attrName, oldValue, newValue);
   }
 
   // We need to handle sub-class custom attributes differently from
   // attrs meant to be passed to the internal native el.
-  forwardAttribute(attrName, oldValue, newValue) {
+  #forwardAttribute(attrName, oldValue, newValue) {
     // Find the matching prop for custom attributes
     const ownProps = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
     const propName = arrayFindAnyCase(ownProps, attrName);
