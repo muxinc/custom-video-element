@@ -61,6 +61,9 @@ template.innerHTML = `
 `;
 
 class CustomVideoElement extends HTMLElement {
+  #hasAttrCallback;
+  #hasInitAttrs;
+
   constructor() {
     super();
 
@@ -83,6 +86,28 @@ class CustomVideoElement extends HTMLElement {
   #initNativeEl(mediaSlot) {
     this.nativeEl = mediaSlot.assignedElements({ flatten: true })[0];
 
+    // The video events are dispatched on the CustomVideoElement instance.
+    // This makes it possible to add event listeners before the element is upgraded.
+    VideoEvents.forEach((type) => {
+      this.nativeEl.addEventListener(type, (evt) => {
+        this.dispatchEvent(new CustomEvent(evt.type, { detail: evt.detail }));
+      });
+    });
+
+    this.#hasInitAttrs = false;
+    // If the custom element is defined before the <custom-video> HTML is parsed
+    // no attributes will be available in the constructor (construction process).
+    // Wait until initializing attributes in the attributeChangedCallback.
+    // If this element is connected to the DOM, the attributes will be available.
+    if (this.#hasAttrCallback || this.isConnected) {
+      this.#initAttrs();
+    }
+  }
+
+  #initAttrs() {
+    if (this.#hasInitAttrs) return;
+    this.#hasInitAttrs = true;
+
     // Initialize all the attribute properties
     // This is required before attributeChangedCallback is called after construction
     // so the initial state of all the attributes are forwarded to the native element.
@@ -100,14 +125,6 @@ class CustomVideoElement extends HTMLElement {
     if (this.nativeEl.defaultMuted) {
       this.nativeEl.muted = true;
     }
-
-    // The video events are dispatched on the CustomVideoElement instance.
-    // This makes it possible to add event listeners before the element is upgraded.
-    VideoEvents.forEach((type) => {
-      this.nativeEl.addEventListener(type, (evt) => {
-        this.dispatchEvent(new CustomEvent(evt.type, { detail: evt.detail }));
-      });
-    });
   }
 
   // observedAttributes is required to trigger attributeChangedCallback
@@ -145,6 +162,12 @@ class CustomVideoElement extends HTMLElement {
   }
 
   attributeChangedCallback(attrName, oldValue, newValue) {
+    // Initialize the attributes right after construction when they become available.
+    if (!this.#hasAttrCallback && !this.isConnected) {
+      this.#hasAttrCallback = true;
+      this.#initAttrs();
+    }
+
     this.#forwardAttribute(attrName, oldValue, newValue);
   }
 

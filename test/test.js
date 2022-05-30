@@ -1,11 +1,54 @@
 import { fixture, assert, aTimeout } from '@open-wc/testing';
-import CustomVideoElement from './index.js';
+// The custom-video-element JS import is defined in web-test-runner.config.js
+// for both an eager and lazy custom element upgrade.
 
 describe('<custom-video>', () => {
   it('is a instance of CustomVideoElement and HTMLElement', async function () {
     const customVideo = await fixture(`<custom-video></custom-video>`);
     assert(customVideo instanceof CustomVideoElement);
     assert(customVideo instanceof HTMLElement);
+  });
+
+  it('has a working muted attribute', async function () {
+    const customVideo = window.customVideo;
+
+    assert(customVideo.hasAttribute('muted'), 'has muted attribute');
+    assert(customVideo.muted, 'has muted=true property');
+    assert(customVideo.nativeEl.hasAttribute('muted'), 'nativeEl has muted attribute');
+    assert(customVideo.nativeEl.muted, 'nativeEl has muted=true property');
+
+    let playing;
+    customVideo.addEventListener('playing', () => (playing = true));
+
+    try {
+      await customVideo.play();
+    } catch (error) {
+      console.warn(error);
+    }
+
+    assert(playing, 'playing event fired');
+    assert(!customVideo.paused, 'paused prop is false');
+  });
+
+  it('has a working muted attribute w/ slotable', async function () {
+    const customVideo = window.customVideoMediaSlot;
+
+    assert(customVideo.hasAttribute('muted'), 'has muted attribute');
+    assert(customVideo.muted, 'has muted=true property');
+    assert(customVideo.nativeEl.hasAttribute('muted'), 'nativeEl has muted attribute');
+    assert(customVideo.nativeEl.muted, 'nativeEl has muted=true property');
+
+    let playing;
+    customVideo.addEventListener('playing', () => (playing = true));
+
+    try {
+      await customVideo.play();
+    } catch (error) {
+      console.warn(error);
+    }
+
+    assert(playing, 'playing event fired');
+    assert(!customVideo.paused, 'paused prop is false');
   });
 
   it('has HTMLVideoElement like properties', async function () {
