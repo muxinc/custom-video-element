@@ -56,8 +56,8 @@ template.innerHTML = `
     min-height: 100%;
   }
 </style>
-<slot></slot>
 <slot name="media"><video part="video" crossorigin></video></slot>
+<slot id="others"></slot>
 `;
 
 class CustomVideoElement extends HTMLElement {
@@ -74,10 +74,12 @@ class CustomVideoElement extends HTMLElement {
     this.#initNativeEl(mediaSlot);
     mediaSlot.addEventListener('slotchange', () => this.#initNativeEl(mediaSlot));
 
-    // Gets the first slot element in the shadow dom.
-    const slotEl = this.shadowRoot.querySelector('slot');
+    // An unnamed <slot> will be filled with all of the custom element's
+    // top-level child nodes that do not have the slot attribute.
+    const slotEl = this.shadowRoot.querySelector('#others');
     slotEl.addEventListener('slotchange', () => {
       slotEl.assignedElements().forEach((el) => {
+        if (!['track', 'source'].includes(el.localName)) return;
         this.nativeEl.append(el);
       });
     });
