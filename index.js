@@ -49,44 +49,40 @@ template.innerHTML = `
     height: auto;
   }
 
-  ::slotted(video), video {
+  video {
     max-width: 100%;
     max-height: 100%;
     min-width: 100%;
     min-height: 100%;
   }
 </style>
-<slot name="media"><video part="video" crossorigin></video></slot>
-<slot id="others"></slot>
+<video part="video" crossorigin></video>
+<slot></slot>
 `;
 
 class CustomVideoElement extends HTMLElement {
   #hasAttrCallback;
-  #hasInitAttrs;
+  #isInit;
 
   constructor() {
     super();
-
     this.attachShadow({ mode: 'open' });
-    this.shadowRoot.append(template.content.cloneNode(true));
 
-    const mediaSlot = this.shadowRoot.querySelector('[name=media]');
-    this.#initNativeEl(mediaSlot);
-    mediaSlot.addEventListener('slotchange', () => this.#initNativeEl(mediaSlot));
-
-    // An unnamed <slot> will be filled with all of the custom element's
-    // top-level child nodes that do not have the slot attribute.
-    const slotEl = this.shadowRoot.querySelector('#others');
-    slotEl.addEventListener('slotchange', () => {
-      slotEl.assignedElements().forEach((el) => {
-        if (!['track', 'source'].includes(el.localName)) return;
-        this.nativeEl.append(el);
-      });
-    });
+    // If the custom element is defined before the <custom-video> HTML is parsed
+    // no attributes will be available in the constructor (construction process).
+    // Wait until initializing attributes in the attributeChangedCallback.
+    // If this element is connected to the DOM, the attributes will be available.
+    if (this.isConnected) {
+      this.#init();
+    }
   }
 
-  #initNativeEl(mediaSlot) {
-    this.nativeEl = mediaSlot.assignedElements({ flatten: true })[0];
+  #init() {
+    if (this.#isInit) return;
+    this.#isInit = true;
+
+    this.shadowRoot.append(template.content.cloneNode(true));
+    this.nativeEl = this.shadowRoot.querySelector('video');
 
     // The video events are dispatched on the CustomVideoElement instance.
     // This makes it possible to add event listeners before the element is upgraded.
@@ -96,26 +92,22 @@ class CustomVideoElement extends HTMLElement {
       });
     });
 
-    this.#hasInitAttrs = false;
-    // If the custom element is defined before the <custom-video> HTML is parsed
-    // no attributes will be available in the constructor (construction process).
-    // Wait until initializing attributes in the attributeChangedCallback.
-    // If this element is connected to the DOM, the attributes will be available.
-    if (this.#hasAttrCallback || this.isConnected) {
-      this.#initAttrs();
-    }
-  }
-
-  #initAttrs() {
-    if (this.#hasInitAttrs) return;
-    this.#hasInitAttrs = true;
+    // An unnamed <slot> will be filled with all of the custom element's
+    // top-level child nodes that do not have the slot attribute.
+    const slotEl = this.shadowRoot.querySelector('slot');
+    slotEl.addEventListener('slotchange', () => {
+      slotEl.assignedElements().forEach((el) => {
+        if (!['track', 'source'].includes(el.localName)) return;
+        this.nativeEl.append(el);
+      });
+    });
 
     // Initialize all the attribute properties
     // This is required before attributeChangedCallback is called after construction
     // so the initial state of all the attributes are forwarded to the native element.
     // Don't call attributeChangedCallback directly here because the extending class
     // could have overridden attributeChangedCallback leading to unexpected results.
-    Array.prototype.forEach.call(this.attributes, attrNode => {
+    Array.prototype.forEach.call(this.attributes, (attrNode) => {
       this.#forwardAttribute(attrNode.name, null, attrNode.value);
     });
 
@@ -135,9 +127,13 @@ class CustomVideoElement extends HTMLElement {
   static get observedAttributes() {
     let attrs = [];
 
-    // Instead of manually creating a list of all observed attributes,
-    // observe any getter/setter prop name (lowercased)
-    Object.getOwnPropertyNames(this.prototype).forEach(propName => {
+    const kebabCase = (name) => {
+      return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    };
+
+    // Instead of manually creating a list of all observed attributes, observe
+    // any getter/setter prop name (lowercase or kebab-case for custom builtins)
+    Object.getOwnPropertyNames(this.prototype).forEach((propName) => {
       let isFunc = false;
 
       // Non-func properties throw errors because it's not an instance
@@ -149,7 +145,7 @@ class CustomVideoElement extends HTMLElement {
 
       // Exclude functions and constants
       if (!isFunc && propName !== propName.toUpperCase()) {
-        attrs.push(propName.toLowerCase());
+        attrs.push(propName.toLowerCase(), kebabCase(propName));
       }
     });
 
@@ -167,7 +163,7 @@ class CustomVideoElement extends HTMLElement {
     // Initialize the attributes right after construction when they become available.
     if (!this.#hasAttrCallback && !this.isConnected) {
       this.#hasAttrCallback = true;
-      this.#initAttrs();
+      this.#init();
     }
 
     this.#forwardAttribute(attrName, oldValue, newValue);
@@ -181,10 +177,7 @@ class CustomVideoElement extends HTMLElement {
     const propName = arrayFindAnyCase(ownProps, attrName);
 
     // Check if this is the original custom native elemnt or a subclass
-    const isBaseElement =
-      Object.getPrototypeOf(this.constructor)
-        .toString()
-        .indexOf('function HTMLElement') === 0;
+    const isBaseElement = Object.getPrototypeOf(this.constructor).toString().indexOf('function HTMLElement') === 0;
 
     // If this is a subclass custom attribute we want to set the
     // matching property on the subclass
@@ -217,9 +210,7 @@ class CustomVideoElement extends HTMLElement {
     }
   }
 
-  connectedCallback() {
-
-  }
+  connectedCallback() {}
 }
 
 // Map all native element properties to the custom element
@@ -235,10 +226,7 @@ let nativeElProps = [];
 const nativeElTest = document.createElement('video');
 
 // Deprecated props throw warnings if used, so exclude them
-const deprecatedProps = [
-  'webkitDisplayingFullscreen',
-  'webkitSupportsFullscreen',
-];
+const deprecatedProps = ['webkitDisplayingFullscreen', 'webkitSupportsFullscreen'];
 
 // Walk the prototype chain up to HTMLElement.
 // This will grab all super class props in between.
@@ -248,7 +236,7 @@ for (
   proto && proto !== HTMLElement.prototype;
   proto = Object.getPrototypeOf(proto)
 ) {
-  Object.keys(proto).forEach(key => {
+  Object.getOwnPropertyNames(proto).forEach((key) => {
     if (deprecatedProps.indexOf(key) === -1) {
       nativeElProps.push(key);
     }
@@ -256,12 +244,13 @@ for (
 }
 
 // Passthrough native el functions from the custom el to the native el
-nativeElProps.forEach(prop => {
-  const type = typeof nativeElTest[prop];
+nativeElProps.forEach((prop) => {
+  if (prop in CustomVideoElement.prototype) return;
 
+  const type = typeof nativeElTest[prop];
   if (type == 'function') {
     // Function
-    CustomVideoElement.prototype[prop] = function() {
+    CustomVideoElement.prototype[prop] = function () {
       return this.nativeEl[prop].apply(this.nativeEl, arguments);
     };
   } else {
@@ -274,7 +263,7 @@ nativeElProps.forEach(prop => {
 
     if (prop !== prop.toUpperCase()) {
       // Setter (not a CONSTANT)
-      config.set = function(val) {
+      config.set = function (val) {
         this.nativeEl[prop] = val;
       };
     }
@@ -286,7 +275,7 @@ nativeElProps.forEach(prop => {
 function arrayFindAnyCase(arr, word) {
   let found = null;
 
-  arr.forEach(item => {
+  arr.forEach((item) => {
     if (item.toLowerCase() == word.toLowerCase()) {
       found = item;
     }

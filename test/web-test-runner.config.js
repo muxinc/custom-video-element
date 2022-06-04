@@ -17,12 +17,6 @@ export default {
               autoplay
               src="http://stream.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/low.mp4"
             ></custom-video>
-            <custom-video
-              id="customVideoMediaSlot"
-              muted
-              autoplay
-              src="http://stream.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/low.mp4"
-            ><video slot="media"></video></custom-video>
           </body>
         </html>`,
     },
@@ -42,12 +36,6 @@ export default {
               autoplay
               src="http://stream.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/low.mp4"
             ></custom-video>
-            <custom-video
-              id="customVideoMediaSlot"
-              muted
-              autoplay
-              src="http://stream.mux.com/DS00Spx1CV902MCtPj5WknGlR102V5HFkDe/low.mp4"
-            ><video slot="media"></video></custom-video>
           </body>
         </html>`,
     },
