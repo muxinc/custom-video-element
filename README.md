@@ -1,4 +1,4 @@
-> 🙋 This package is evolved into a new and improved package [custom-media-element](https://github.com/muxinc/custom-media-element).
+> 🙋 This package is evolved into a new and improved package [custom-media-element](https://github.com/muxinc/custom-media-element).  
 > It's recommended to migrate to `custom-media-element` as this package will be sunset in the near future. 
 
 # Custom Video Element
